@@ -5,7 +5,19 @@ APT_UPDATED=0
 
 REPO_OWNER="eylenburg"
 REPO_NAME="linoffice"
+# TARGET_DIR="$HOME/.local/bin/linoffice"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Parse arguments
 TARGET_DIR="$HOME/.local/bin/linoffice"
+ND=0
+for arg in "$@"; do
+  if [[ "$arg" == --path=* ]]; then
+    TARGET_DIR="${arg#--path=}"
+  fi
+  if [[ "$arg" == --nodownload ]]; then
+    ND=1
+  fi
+done
 TMPDIR=$(mktemp -d)
 GITHUB_API_URL="https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases"
 
@@ -265,8 +277,8 @@ is_python_dotenv_installed() {
 }
 
 freerdp_version_ok() {
-  if command -v xfreerdp >/dev/null 2>&1; then
-    ver=$(xfreerdp --version | grep -oP '\d+\.\d+\.\d+' | head -n1)
+  if command -v xfreerdp3 >/dev/null 2>&1; then
+    ver=$(xfreerdp3 --version | grep -oP '\d+\.\d+\.\d+' | head -n1)
     major=$(echo "$ver" | cut -d. -f1)
     [ "$major" -ge 3 ]
   else
@@ -280,7 +292,7 @@ install_freerdp_flatpak() {
     try_install_any flatpak || { echo "Failed to install flatpak"; exit 1; }
   fi
 
-# make sure to specifically detect flathub user, not flathub system
+  # make sure to specifically detect flathub user, not flathub system
   if ! flatpak remote-list | grep -q 'flathub.*user'; then
     flatpak remote-add --if-not-exists --user flathub https://dl.flathub.org/repo/flathub.flatpakrepo
   fi
@@ -684,6 +696,17 @@ start_linoffice() {
   nohup "$PYTHON_CMD" "$LINOFFICE_SCRIPT" > /dev/null 2>&1 &
 }
 
+setPath() {
+  # Copy entire directory structure to target location
+  if [ "$SCRIPT_DIR" != "$TARGET_DIR" ]; then
+      echo "Copying LinOffice structure from $SCRIPT_DIR to $TARGET_DIR"
+      mkdir -p "$TARGET_DIR"
+      cp -r "$SCRIPT_DIR"/* "$TARGET_DIR/" || exit_with_error "Failed to copy files to $TARGET_DIR"
+      echo "Files copied successfully to $TARGET_DIR"
+  else echo "LinOffice is already in the target directory: $TARGET_DIR"
+  fi
+}
+
 ##################################################
 # Main logic
 ##################################################
@@ -691,7 +714,11 @@ start_linoffice() {
 read -p "Welcome to the LinOffice installer. We will check and install dependencies, download the latest LinOffice release, and then run the main setup, which will install a Windows container with Microsoft Office. Are you sure you want to continue? (y/n): " confirmation
 if [[ "$confirmation" == "y" || "$confirmation" == "Y" ]]; then
   dependencies_main "$@"
-  download_latest
+  if [ "$ND" -eq 1 ]; then
+    setPath
+  else
+    download_latest
+  fi
   start_linoffice
 else
   echo "Cancelled."
