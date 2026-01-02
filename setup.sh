@@ -16,16 +16,7 @@ OUTPUT_LOG="${APPDATA_PATH}/setup_output.log"
 
 # Relative filepaths
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TARGET_DIR="${1:-$HOME/.local/bin/linoffice}"
-LINOFFICE_DIR="$TARGET_DIR"
-
-# Copy entire directory structure to target location
-if [ "$SCRIPT_DIR" != "$TARGET_DIR" ]; then
-    print_info "Copying LinOffice structure from $SCRIPT_DIR to $TARGET_DIR"
-    mkdir -p "$TARGET_DIR"
-    cp -r "$SCRIPT_DIR"/* "$TARGET_DIR/" || exit_with_error "Failed to copy files to $TARGET_DIR"
-    print_success "Files copied successfully to $TARGET_DIR"
-fi
+LINOFFICE_DIR="$SCRIPT_DIR"
 LINOFFICE="$(realpath "${SCRIPT_DIR}/linoffice.sh")"
 COMPOSE_FILE="$(realpath "${SCRIPT_DIR}/config/compose.yaml")"
 LINOFFICE_CONF="$(realpath "${SCRIPT_DIR}/config/linoffice.conf")"
