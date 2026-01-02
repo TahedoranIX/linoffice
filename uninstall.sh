@@ -306,9 +306,9 @@ if [[ -n "$FILES_TO_DELETE" ]]; then
     fi
     echo "Files and folders deleted."
     # Delete the uninstall.sh script itself
-    echo "Deleting the uninstall script itself."
-    rm -f "$0"
-    echo "Uninstall script deleted."
+    # echo "Deleting the uninstall script itself."
+    # rm -f "$0"
+    # echo "Uninstall script deleted."
   else
     echo "Deletion of files and folders aborted."
   fi
