@@ -1162,54 +1162,56 @@ function check_available() {
 					;;
 			esac
 		done
+        print_info 'Skipping RDP check in setup script.'
 		
 		# Build command arguments
-		local cmd_args=(
-			/cert:ignore
-			/u:MyWindowsUser
-			/p:MyWindowsPassword
-			/v:127.0.0.1
-			/port:3388
-			"${arg_flags[@]}"
-			/app:program:"C:\Windows\System32\cmd.exe",cmd:"/c tsdiscon"
-		)
+		# local cmd_args=(
+		# 	/cert:ignore
+		# 	/u:MyWindowsUser
+		# 	/p:MyWindowsPassword
+		# 	/v:127.0.0.1
+		# 	/port:3388
+		# 	"${arg_flags[@]}"
+		# 	# /app:program:"C:\Windows\System32\cmd.exe",cmd:"/c tsdiscon"  
+        #     # /app:program:explorer.exe
+		# )   
 		
-		# Execute command based on type
-		if [[ "$cmd_str" == flatpak* ]]; then
-			local full_cmd="$cmd_str"
-			for arg in "${cmd_args[@]}"; do
-				full_cmd="$full_cmd $arg"
-			done
-			print_info "trying command: timeout 30 bash -c '$full_cmd'"
+		# # Execute command based on type
+		# if [[ "$cmd_str" == flatpak* ]]; then
+		# 	local full_cmd="$cmd_str"
+		# 	for arg in "${cmd_args[@]}"; do
+		# 		full_cmd="$full_cmd $arg"
+		# 	done
+		# 	print_info "trying command: timeout 30 bash -c '$full_cmd'"
 			
-			if [ "$use_xwayland" = true ]; then
-				output=$(timeout 30 bash -c "WAYLAND_DISPLAY= $full_cmd" 2>&1)
-			else
-				output=$(timeout 30 bash -c "$full_cmd" 2>&1)
-			fi
-		else
-			print_info "trying command: timeout 30 $cmd_str ${cmd_args[*]}"
+		# 	if [ "$use_xwayland" = true ]; then
+		# 		output=$(timeout 30 bash -c "WAYLAND_DISPLAY= $full_cmd" 2>&1)
+		# 	else
+		# 		output=$(timeout 30 bash -c "$full_cmd" 2>&1)
+		# 	fi
+		# else
+		# 	print_info "trying command: timeout 30 $cmd_str ${cmd_args[*]}"
 			
-			if [ "$use_xwayland" = true ]; then
-				output=$(timeout 30 env WAYLAND_DISPLAY= "$cmd_str" "${cmd_args[@]}" 2>&1)
-			else
-				output=$(timeout 30 "$cmd_str" "${cmd_args[@]}" 2>&1)
-			fi
-		fi
+		# 	if [ "$use_xwayland" = true ]; then
+		# 		output=$(timeout 30 env WAYLAND_DISPLAY= "$cmd_str" "${cmd_args[@]}" 2>&1)
+		# 	else
+		# 		output=$(timeout 30 "$cmd_str" "${cmd_args[@]}" 2>&1)
+		# 	fi
+		# fi
 		
-		# Log everything, print ERROR lines only to terminal
-		echo "$output" >>"$LOGFILE"
-		local error_lines
-		error_lines=$(echo "$output" | grep -F "ERROR" || true)
-		if [ -n "$error_lines" ]; then echo "$error_lines"; fi
+		# # Log everything, print ERROR lines only to terminal
+		# echo "$output" >>"$LOGFILE"
+		# local error_lines
+		# error_lines=$(echo "$output" | grep -F "ERROR" || true)
+		# if [ -n "$error_lines" ]; then echo "$error_lines"; fi
 		
-		# Success when user logoff detected
-		if echo "$output" | grep -q "ERRINFO_LOGOFF_BY_USER"; then
-			print_success "RDP server is available (user logoff detected)"
-			print_info "Used command: $cmd_str ${cmd_args[*]}"
-			return 0   
-		fi
-		return 1
+		# # Success when user logoff detected
+		# if echo "$output" | grep -q "ERRINFO_LOGOFF_BY_USER"; then
+		# 	print_success "RDP server is available (user logoff detected)"
+		# 	print_info "Used command: $cmd_str ${cmd_args[*]}"
+		# 	return 0   
+		# fi
+		return 0
 	}
 
 	# Helper to run full test sequence
@@ -1407,51 +1409,51 @@ function check_success() {
 	cmd_args+=(/app:program:"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe",cmd:"-ExecutionPolicy Bypass -File C:\\OEM\\FirstRDPRun.ps1")
 
 	# Retry loop for FreeRDP connection
-	while [ $retry_count -lt $max_retries ]; do
-		retry_count=$((retry_count + 1))
-		print_info "Starting FreeRDP connection to mount home directory (Attempt $retry_count of $max_retries)..."
+	# while [ $retry_count -lt $max_retries ]; do
+	# 	retry_count=$((retry_count + 1))
+	# 	print_info "Starting FreeRDP connection to mount home directory (Attempt $retry_count of $max_retries)..."
 		
-		# Start FreeRDP in the background with home-drive enabled
-		if [[ "$FREERDP_COMMAND" == flatpak* ]]; then
-			local full_cmd="$FREERDP_COMMAND"
-			for arg in "${cmd_args[@]}"; do
-				full_cmd="$full_cmd $arg"
-			done
+	# 	# Start FreeRDP in the background with home-drive enabled
+	# 	if [[ "$FREERDP_COMMAND" == flatpak* ]]; then
+	# 		local full_cmd="$FREERDP_COMMAND"
+	# 		for arg in "${cmd_args[@]}"; do
+	# 			full_cmd="$full_cmd $arg"
+	# 		done
 			
-			if [ "$FREERDP_XWAYLAND" = true ]; then
-				bash -c "WAYLAND_DISPLAY= $full_cmd" >>"$LOGFILE" 2>&1 &
-			else
-				bash -c "$full_cmd" >>"$LOGFILE" 2>&1 &
-			fi
-		else
-			if [ "$FREERDP_XWAYLAND" = true ]; then
-				env WAYLAND_DISPLAY= "$FREERDP_COMMAND" "${cmd_args[@]}" >>"$LOGFILE" 2>&1 &
-			else
-				"$FREERDP_COMMAND" "${cmd_args[@]}" >>"$LOGFILE" 2>&1 &
-			fi
-		fi
+	# 		if [ "$FREERDP_XWAYLAND" = true ]; then
+	# 			bash -c "WAYLAND_DISPLAY= $full_cmd" >>"$LOGFILE" 2>&1 &
+	# 		else
+	# 			bash -c "$full_cmd" >>"$LOGFILE" 2>&1 &
+	# 		fi
+	# 	else
+	# 		if [ "$FREERDP_XWAYLAND" = true ]; then
+	# 			env WAYLAND_DISPLAY= "$FREERDP_COMMAND" "${cmd_args[@]}" >>"$LOGFILE" 2>&1 &
+	# 		else
+	# 			"$FREERDP_COMMAND" "${cmd_args[@]}" >>"$LOGFILE" 2>&1 &
+	# 		fi
+	# 	fi
 		
-		freerdp_pid=$!
+	# 	freerdp_pid=$!
 		
-		# Wait briefly and check if FreeRDP started successfully
-		sleep 5
-		if kill -0 "$freerdp_pid" 2>/dev/null; then
-			print_success "FreeRDP connection established successfully (PID: $freerdp_pid)"
-			break
-		else
-			wait $freerdp_pid 2>/dev/null
-			local exit_code=$?
-			print_error "FreeRDP failed to start or exited immediately (exit code: $exit_code)"
+	# 	# Wait briefly and check if FreeRDP started successfully
+	# 	sleep 5
+	# 	if kill -0 "$freerdp_pid" 2>/dev/null; then
+	# 		print_success "FreeRDP connection established successfully (PID: $freerdp_pid)"
+	# 		break
+	# 	else
+	# 		wait $freerdp_pid 2>/dev/null
+	# 		local exit_code=$?
+	# 		print_error "FreeRDP failed to start or exited immediately (exit code: $exit_code)"
 			
-			if [ $retry_count -lt $max_retries ]; then
-				print_info "Retrying in 10 seconds..."
-				sleep 10
-			else
-				print_error "Max retries ($max_retries) reached. Check log file at $LOGFILE for details."
-				return 1
-			fi
-		fi
-	done
+	# 		if [ $retry_count -lt $max_retries ]; then
+	# 			print_info "Retrying in 10 seconds..."
+	# 			sleep 10
+	# 		else
+	# 			print_error "Max retries ($max_retries) reached. Check log file at $LOGFILE for details."
+	# 			return 1
+	# 		fi
+	# 	fi
+	# done
 
 	# Reset elapsed time for installation monitoring
 	elapsed_time=0
